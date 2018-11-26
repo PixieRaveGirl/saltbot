@@ -1,65 +1,59 @@
-var btnClicked = function(clicktype: string, data = null) {
+var btnClicked = function (clicktype, data) {
+	data = data || null;
 	chrome.tabs.query({
 		active: true,
-		currentWindow: true,
-	}, function() {
+		currentWindow: true
+	}, function () {
 		chrome.runtime.sendMessage({
-			text: data,
 			type: clicktype,
-		}, function(response) {
+			text: data
+		}, function (response) {
 			console.debug(response);
 		});
 	});
 };
-var elementChanged = function(changetype, data) {
+var elementChanged = function (changetype, data) {
 	btnClicked(changetype, data);
 };
 
-let dr = function(sortByMoney) {
-	const rankingElement = $("#ranking")[0];
+var dr = function (sortByMoney) {
+	var rankingElement = $("#ranking")[0];
 	rankingElement.innerHTML = "Loading...";
-	chrome.storage.local.get(["characters_v1", "bettors_v1"], function(results) {
-		const bw10 = [];
-		const accTypeI: number[] = [];
-		const accTypeC: number[] = [];
-		for (const a of results.bettors_v1) {
-			const aTotal = a.wins + a.losses;
+	chrome.storage.local.get(["matches_v1", "characters_v1", "bettors_v1"], function (results) {
+		var bw10 = [];
+		var accTypeI = [];
+		var accTypeC = [];
+		for (var i in results.bettors_v1) {
+			var a = results.bettors_v1[i];
+			var aTotal = a.wins + a.losses;
 			a.accuracy = a.wins / aTotal * 100;
 			if (aTotal >= 100) {
 				a.total = aTotal;
 				bw10.push(a);
 			}
-
-			if (a.type === "i") {
+			if (a.type == "i")
 				accTypeI.push(a.accuracy);
-			}
-			else if (a.type === "c") {
+			else if (a.type == "c")
 				accTypeC.push(a.accuracy);
-			}
 		}
-		const sbm = sortByMoney;
-		bw10.sort(function(a, b) {
-			if (sbm) {
+		var sbm = sortByMoney;
+		bw10.sort(function (a, b) {
+			if (sbm)
 				return (b.accuracy * b.total) - (a.accuracy * a.total);
-			}
 			return (b.accuracy) - (a.accuracy);
 		});
-		let blist = "";
-		for (let j = 0; j < bw10.length; j++) {
-			const b = bw10[j];
-			blist += b.accuracy.toFixed(2) + " %acc " +
-				" (" + ((1 - (j / bw10.length)) * 100).toFixed(2) + "%pcl) :" +
-				" (" + b.type + ")(" + b.total + ") " + b.name + "\n";
+		var blist = "";
+		for (var j = 0; j < bw10.length; j++) {
+			var b = bw10[j];
+			blist += b.accuracy.toFixed(2) + " %acc  (" + ((1 - (j / bw10.length)) * 100).toFixed(2) + "%pcl) : (" + b.type + ")(" + b.total + ") " + b.name + "\n";
 		}
 
-		let iSum = 0;
-		for (const i of accTypeI) {
-			iSum += i;
-		}
-		let cSum = 0;
-		for (const c of accTypeC) {
-			cSum += c;
-		}
+		var iSum = 0;
+		for (var k in accTypeI)
+			iSum += accTypeI[k];
+		var cSum = 0;
+		for (var l in accTypeC)
+			cSum += accTypeC[l];
 
 		$("#details-ranking")[0].style.display = "block";
 
@@ -71,44 +65,47 @@ let dr = function(sortByMoney) {
 	});
 };
 
-let drClick = function() {
+var drClick = function () {
 	dr(false);
 	//btnClicked("dr");
 };
-let prClick = function() {
+var prClick = function () {
 	dr(true);
 	//btnClicked("pr");
 };
 
-let teChange = function() {
-	elementChanged("te", ($("#te")[0] as HTMLInputElement).checked);
+var teChange = function () {
+	elementChanged("te", $("#te")[0].checked);
 };
 
-let aitChange = function() {
-	elementChanged("ait", ($("#ait")[0] as HTMLInputElement).checked);
+var aitChange = function () {
+	elementChanged("ait", $("#ait")[0].checked);
 };
 
-let tLimitChange = function(ev) {
-	const tLimit = +($("#tourney-limit")[0] as HTMLInputElement).value;
+var tLimitChange = function (ev) {
+	var tLimit = $("#tourney-limit")[0].value;
 
+	if (!tLimit) {
+		return;
+	}
 	if (tLimit < 1000) {
 		return;
 	}
 
-	elementChanged("tourney_limit_" + ((($("#ctl")[0] as HTMLInputElement).checked) ? "enable" : "disable"), tLimit);
+	elementChanged("tourney_limit_" + (($("#ctl")[0].checked) ? "enable" : "disable"), tLimit);
 };
 
-let keepAliveChange = function() {
-	elementChanged("keepAlive", ($("#toggleKeepAlive")[0] as HTMLInputElement).checked);
-};
+var keepAliveChange = function () {
+	elementChanged("keepAlive", $("#toggleKeepAlive")[0].checked);
+}
 
-document.addEventListener("DOMContentLoaded", function() {
-	chrome.storage.local.get(["settings_v1"], function(results) {
-		$("#te").prop("checked", results.settings_v1.exhibitions);
-		$("#ait").prop("checked", results.settings_v1.allInTourney);
-		$("#ctl").prop("checked", results.settings_v1.tourneyLimit_enabled);
-  ($("#tourney-limit")[0] as HTMLInputElement).value = results.settings_v1.tourneyLimit;
-		$("#toggleKeepAlive").prop("checked", results.settings_v1.keepAlive);
+document.addEventListener('DOMContentLoaded', function () {
+	chrome.storage.local.get(["settings_v1"], function (results) {
+		$("#te").prop('checked', results.settings_v1.exhibitions);
+		$("#ait").prop('checked', results.settings_v1.allInTourney);
+		$("#ctl").prop('checked', results.settings_v1.tourneyLimit_enabled);
+		$("#tourney-limit")[0].value = results.settings_v1.tourneyLimit;
+		$("#toggleKeepAlive").prop('checked', results.settings_v1.keepAlive)
 	});
 
 	$("#bdr")[0].addEventListener("click", drClick);
@@ -117,5 +114,5 @@ document.addEventListener("DOMContentLoaded", function() {
 	$("#ait")[0].addEventListener("change", aitChange);
 	$("#ctl")[0].addEventListener("change", tLimitChange);
 	$("#toggleKeepAlive")[0].addEventListener("change", keepAliveChange);
-	$("#tourney-limit").bind("keyup input", tLimitChange);
+	$("#tourney-limit").bind('keyup input', tLimitChange);
 });
